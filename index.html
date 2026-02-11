@@ -39,26 +39,28 @@
     .btn:hover { transform: translateY(-3px); }
     .btn-delete {
       background: linear-gradient(180deg, #ff5252 0%, var(--btn-red) 100%);
-      padding: 8px 20px; width: 100%; margin-top: 10px;
+      padding: 8px 20px; width: 100%; margin-top: 15px; font-weight: bold;
     }
     .section {
       display: none; background: rgba(255, 255, 255, 0.9);
       padding: 25px; border-radius: 20px; box-shadow: var(--shadow);
     }
     .active { display: block; }
-    iframe { width: 100%; height: 2000px; border: none; border-radius: 12px; background: white; }
+    iframe { width: 100%; height: 2500px; border: none; border-radius: 12px; background: white; }
     .search-box { padding-bottom: 20px; border-bottom: 2px dashed #c8e6c9; margin-bottom: 20px; text-align: center;}
     input[type="text"] {
       padding: 12px; width: 220px; border: 2px solid #ddd; border-radius: 12px;
       font-size: 16px; text-align: center;
     }
     .result-card {
-      background: white; padding: 20px; margin: 15px 0;
-      border-radius: 15px; border-left: 8px solid var(--court-green-light);
+      background: white; padding: 25px; margin: 20px 0;
+      border-radius: 15px; border-left: 10px solid var(--court-green-light);
       box-shadow: 0 5px 15px rgba(0,0,0,0.05); text-align: left;
     }
-    .player-info { margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px dashed #eee; }
+    .player-info { margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px dashed #eee; }
     .player-info:last-of-type { border-bottom: none; }
+    .result-card p { margin: 6px 0; font-size: 16px; line-height: 1.5; }
+    .result-card strong { color: var(--court-green); margin-right: 5px; }
     .loading { color: var(--court-green); font-weight: bold; text-align: center; }
   </style>
 </head>
@@ -66,17 +68,18 @@
   <div class="wrap">
     <div class="title-container"><h1>🏸 市教育會報名系統</h1></div>
     <div class="nav-buttons">
-      <button class="btn" onclick="showSection('form-section')">競賽報名表單</button>
-      <button class="btn" onclick="showSection('search-section')">報名查詢/刪除</button>
+      <button class="btn" onclick="showSection('form-section')">報名表單</button>
+      <button class="btn" onclick="showSection('search-section')">查詢/刪除報名</button>
     </div>
 
     <div id="form-section" class="section active">
+      <!-- 請確認此表單網址正確 -->
       <iframe src="https://docs.google.com/forms/d/e/1FAIpQLSc1Jp8uDL54Gu97IasA5fS7LUxG3GXN6l_0wC3gqUdfzy0NVQ/viewform">載入中…</iframe>
     </div>
 
     <div id="search-section" class="section">
       <div class="search-box">
-        <h3>🏸 輸入身分證後5碼進行驗證</h3>
+        <h3>🏸 輸入身分證後5碼驗證查詢</h3>
         <input type="text" id="idInput" placeholder="例如: 12345" maxlength="5" />
         <button class="btn" onclick="searchData()" style="min-width: 100px; margin-top:10px;">查詢</button>
       </div>
@@ -85,7 +88,8 @@
   </div>
 
   <script>
-    var GAS_URL = "https://script.google.com/macros/s/AKfycbwQznLEsRHI3kGvLEf1iVZEhLk1_Q87BE43B605wCw1iVH-Pqy79uh64wLvOGC4WOCV/exec"; 
+    // 重要：請務必替換為您最新部署的 GAS 網頁應用程式網址
+    var GAS_URL = "https://script.google.com/macros/s/AKfycbwseNsHfGP9mMiAWqfvcBCbmeCUw8VIXgNC-T6j3Tdor9aYSMjot9lKFs-XkITLI4g/exec"; 
 
     function showSection(id) {
       document.querySelectorAll(".section").forEach(s => s.classList.remove("active"));
@@ -97,52 +101,57 @@
       const resultArea = document.getElementById("result-area");
       if (idValue.length !== 5) { alert("請輸入正確的身分證後5碼"); return; }
 
-      resultArea.innerHTML = '<p class="loading">正在檢索名單... 🏸</p>';
+      resultArea.innerHTML = '<p class="loading">正在尋找您的名單... 🏸</p>';
       try {
         const response = await fetch(`${GAS_URL}?action=search&id=${idValue}`);
         const data = await response.json();
 
         if (data.length === 0) {
-          resultArea.innerHTML = "<p style='text-align:center; color:red;'>查無報名資料。</p>";
+          resultArea.innerHTML = "<p style='text-align:center; color:#d32f2f; font-weight:bold; padding:20px;'>查無報名資料，請確認輸入是否正確。</p>";
           return;
         }
 
         let html = "";
         data.forEach(entry => {
           html += `<div class="result-card">
-                    <p><strong>組別：</strong>${entry.group} (序號: ${entry.serial})</p><hr>`;
+                    <p><strong>組別：</strong>${entry.group}</p>
+                    <p><strong>組別序號：</strong>${entry.serial}</p><hr style="border:0; border-top:1px solid #eee; margin:15px 0;">`;
+          
           entry.players.forEach((p, idx) => {
             html += `<div class="player-info">
-                      <p>選手 ${idx+1}：${p.name} / ${p.unit}</p>
-                      <p>身分證：${p.id} / 生日：${p.birthday}</p>
+                      <p><strong>選手姓名：</strong>${p.name}</p>
+                      <p><strong>服務單位：</strong>${p.unit}</p>
+                      <p><strong>身分證字號：</strong>${p.id}</p>
+                      <p><strong>出生年月日：</strong>${p.birthday}</p>
                     </div>`;
           });
-          html += `<button class="btn btn-delete" onclick="deleteEntry('${idValue}', '${entry.group}')">刪除此筆報名</button></div>`;
+          
+          html += `<button class="btn btn-delete" onclick="deleteEntry('${idValue}', '${entry.group}')">刪除整筆報名資料</button></div>`;
         });
         resultArea.innerHTML = html;
       } catch (e) {
-        resultArea.innerHTML = "<p style='text-align:center; color:red;'>系統連線發生錯誤。</p>";
+        resultArea.innerHTML = "<p style='text-align:center; color:red;'>系統連線發生錯誤，請稍後再試。</p>";
       }
     }
 
     async function deleteEntry(id5, group) {
-      if (!confirm(`確定要刪除「${group}」的這筆報名資料嗎？`)) return;
+      if (!confirm(`確定要刪除「${group}」的這筆報名資料嗎？\n刪除後無法復原。`)) return;
       
       const resultArea = document.getElementById("result-area");
-      resultArea.innerHTML = '<p class="loading">正在處理刪除並重整名冊... 🏸</p>';
+      resultArea.innerHTML = '<p class="loading">正在刪除資料並重整名冊... 🏸</p>';
 
       try {
         const response = await fetch(`${GAS_URL}?action=delete&id=${id5}&group=${encodeURIComponent(group)}`);
         const res = await response.json();
         if (res.status === "success") {
-          alert("刪除成功！");
-          searchData(); // 重新整理畫面
+          alert("刪除成功！報名名冊已自動更新。");
+          searchData(); 
         } else {
           alert("刪除失敗：" + res.message);
           searchData();
         }
       } catch (e) {
-        alert("刪除請求失敗，請稍後再試。");
+        alert("請求刪除時發生錯誤，請稍後再試。");
       }
     }
   </script>
