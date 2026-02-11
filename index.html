@@ -69,11 +69,10 @@
     <div class="title-container"><h1>🏸 市教育會報名系統</h1></div>
     <div class="nav-buttons">
       <button class="btn" onclick="showSection('form-section')">報名表單</button>
-      <button class="btn" onclick="showSection('search-section')">查詢/刪除報名</button>
+      <button class="btn" onclick="showSection('search-section')">報名查詢/刪除</button>
     </div>
 
     <div id="form-section" class="section active">
-      <!-- 請確認此表單網址正確 -->
       <iframe src="https://docs.google.com/forms/d/e/1FAIpQLSc1Jp8uDL54Gu97IasA5fS7LUxG3GXN6l_0wC3gqUdfzy0NVQ/viewform">載入中…</iframe>
     </div>
 
@@ -89,7 +88,7 @@
 
   <script>
     // 重要：請務必替換為您最新部署的 GAS 網頁應用程式網址
-    var GAS_URL = "https://script.google.com/macros/s/AKfycbwseNsHfGP9mMiAWqfvcBCbmeCUw8VIXgNC-T6j3Tdor9aYSMjot9lKFs-XkITLI4g/exec"; 
+    var GAS_URL = "https://script.google.com/macros/s/AKfycbweWOJDvhDV0HeM0AnwAZaQR8fwKGCirB2m6GM2OFsSTZIU3VInvqZk8iV22YFFVpsw/exec"; 
 
     function showSection(id) {
       document.querySelectorAll(".section").forEach(s => s.classList.remove("active"));
@@ -107,7 +106,7 @@
         const data = await response.json();
 
         if (data.length === 0) {
-          resultArea.innerHTML = "<p style='text-align:center; color:#d32f2f; font-weight:bold; padding:20px;'>查無報名資料，請確認輸入是否正確。</p>";
+          resultArea.innerHTML = "<p style='text-align:center; color:#d32f2f; font-weight:bold; padding:20px;'>查無報名資料。</p>";
           return;
         }
 
@@ -130,12 +129,12 @@
         });
         resultArea.innerHTML = html;
       } catch (e) {
-        resultArea.innerHTML = "<p style='text-align:center; color:red;'>系統連線發生錯誤，請稍後再試。</p>";
+        resultArea.innerHTML = "<p style='text-align:center; color:red;'>系統連線發生錯誤。</p>";
       }
     }
 
     async function deleteEntry(id5, group) {
-      if (!confirm(`確定要刪除「${group}」的這筆報名資料嗎？\n刪除後無法復原。`)) return;
+      if (!confirm(`確定要刪除「${group}」的這筆報名資料嗎？`)) return;
       
       const resultArea = document.getElementById("result-area");
       resultArea.innerHTML = '<p class="loading">正在刪除資料並重整名冊... 🏸</p>';
@@ -144,14 +143,14 @@
         const response = await fetch(`${GAS_URL}?action=delete&id=${id5}&group=${encodeURIComponent(group)}`);
         const res = await response.json();
         if (res.status === "success") {
-          alert("刪除成功！報名名冊已自動更新。");
+          alert("刪除成功！");
           searchData(); 
         } else {
           alert("刪除失敗：" + res.message);
           searchData();
         }
       } catch (e) {
-        alert("請求刪除時發生錯誤，請稍後再試。");
+        alert("請求發生錯誤。");
       }
     }
   </script>
