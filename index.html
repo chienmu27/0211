@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>市教育會報名與查詢系統</title>
+  <style>
+    /* ... 保持原有 CSS 樣式 ... */
+    :root {
+      --court-green: #2e7d32;
+      --court-green-light: #4caf50;
+      --shuttle-white: #ffffff;
+      --sky-blue: #e3f2fd;
+      --accent-yellow: #fff176;
+      --btn-blue: #1e88ff;
+      --btn-red: #d32f2f;
+      --shadow: 0 12px 30px rgba(0,0,0,0.1);
+    }
+    * { box-sizing: border-box; }
+    body { font-family: "Microsoft JhengHei", system-ui, sans-serif; margin: 0; padding: 30px 15px; color: #1b5e20; background: linear-gradient(135deg, var(--sky-blue) 0%, #c8e6c9 100%); background-attachment: fixed; min-height: 100vh; display: flex; justify-content: center; align-items: flex-start; }
+    .wrap { width: min(900px, 100%); animation: fadeIn 0.8s ease-out; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    .title-container { text-align: center; margin-bottom: 25px; }
+    h1 { background: var(--court-green); color: white; padding: 10px 30px; border-radius: 50px; display: inline-flex; align-items: center; gap: 12px; font-size: clamp(18px, 4.5vw, 28px); }
+    .nav-buttons { display: flex; justify-content: center; gap: 12px; margin-bottom: 25px; flex-wrap: wrap; }
+    .btn { padding: 12px 25px; font-size: 16px; font-weight: bold; cursor: pointer; border: none; color: white; border-radius: 50px; background: linear-gradient(180deg, var(--btn-blue) 0%, #1565c0 100%); transition: 0.3s; min-width: 160px; }
+    .btn:hover { transform: translateY(-3px); box-shadow: 0 10px 20px rgba(30,136,255,0.4); }
+    .btn-delete { background: linear-gradient(180deg, var(--btn-red) 0%, #b71c1c 100%); margin-top: 15px; width: 100%; min-width: auto; }
+    .section { display: none; background: rgba(255, 255, 255, 0.9); padding: 25px; border-radius: 20px; box-shadow: var(--shadow); backdrop-filter: blur(10px); }
+    .active { display: block; animation: slideDown 0.5s ease-out; }
+    @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+    iframe { width: 100%; height: 2500px; border: none; border-radius: 12px; background: white; }
+    .search-box { padding: 10px 0 20px; border-bottom: 2px dashed #c8e6c9; margin-bottom: 20px; text-align: center;}
+    input[type="text"] { padding: 12px 20px; width: 200px; border: 2px solid #ddd; border-radius: 12px; font-size: 16px; text-align: center; }
+    .result-card { text-align: left; background: white; padding: 20px; margin: 15px 0; border-radius: 15px; border-left: 8px solid var(--court-green-light); position: relative; }
+    .result-card p { margin: 8px 0; border-bottom: 1px solid #f0f0f0; padding-bottom: 4px; }
+    .result-card strong { color: var(--court-green); }
+    .loading { color: var(--court-green); font-weight: bold; padding: 20px; text-align: center; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="title-container">
+      <h1>🏸 市教育會報名系統</h1>
+    </div>
+
+    <div class="nav-buttons">
+      <button class="btn" onclick="showSection('form-section')">報名表單</button>
+      <button class="btn" onclick="showSection('search-section')">查詢 / 刪除報名</button>
+    </div>
+
+    <div id="form-section" class="section active">
+      <iframe src="https://docs.google.com/forms/d/e/1FAIpQLScazVR5wTsHqvLmj3yRu12UppwnQlRBbSDZ1hnhHbTNTKkvoQ/viewform">載入中…</iframe>
+    </div>
+
+    <div id="search-section" class="section">
+      <div class="search-box">
+        <h3>🏸 報名資料管理</h3>
+        <p>輸入身分證後5碼，可查詢資料或取消報名</p>
+        <input type="text" id="idInput" placeholder="身分證後5碼" maxlength="5" />
+        <button class="btn" onclick="searchData()" style="min-width: 120px; margin-top:10px;">開始查詢</button>
+      </div>
+      <div id="result-area"></div>
+    </div>
+  </div>
+
+  <script>
+    // *** 重要：請換成你部署後的網址 ***
+    var GAS_URL = "https://script.google.com/macros/s/AKfycbzwKnLeud64O8B-VxycfGK_D9pXm3EjAj0HLd2H81VOLViy8gA5xxIpf7RtjJ7NKhlH/exec";
+
+    function showSection(id) {
+      document.querySelectorAll(".section").forEach((s) => s.classList.remove("active"));
+      document.getElementById(id).classList.add("active");
+    }
+
+    async function searchData() {
+      const idValue = document.getElementById("idInput").value.trim();
+      const resultArea = document.getElementById("result-area");
+
+      if (idValue.length !== 5) {
+        alert("請輸入身分證後5碼");
+        return;
+      }
+
+      resultArea.innerHTML = '<p class="loading">正在檢索球員名單... 🏸</p>';
+
+      try {
+        const response = await fetch(`${GAS_URL}?id=${idValue}`);
+        const data = await response.json();
+
+        if (data.length === 0) {
+          resultArea.innerHTML = "<p style='color:#d32f2f; text-align:center; padding:20px;'>查無資料，請確認後5碼是否正確。</p>";
+          return;
+        }
+
+        let html = "";
+        data.forEach((item) => {
+          html += `
+            <div class="result-card">
+              <p><strong>報名項目：</strong>${item.group}</p>
+              <p><strong>選手姓名：</strong>${item.name}</p>
+              <p><strong>服務單位：</strong>${item.unit}</p>
+              <p><strong>身分證字號：</strong>${item.id}</p>
+              <p><strong>出生日期：</strong>${item.birthday}</p>
+              <button class="btn btn-delete" onclick="deleteRecord('${item.timestamp}', '${item.group}')">刪除此筆報名項目</button>
+            </div>
+          `;
+        });
+        resultArea.innerHTML = html;
+      } catch (error) {
+        resultArea.innerHTML = "<p style='color:#d32f2f; text-align:center;'>連線失敗，請稍後再試。</p>";
+      }
+    }
+
+    async function deleteRecord(timestamp, groupName) {
+      const idValue = document.getElementById("idInput").value.trim();
+      if (!confirm(`確定要刪除「${groupName}」的報名資料嗎？\n刪除後將無法復原。`)) return;
+
+      const resultArea = document.getElementById("result-area");
+      resultArea.innerHTML = '<p class="loading">正在取消報名並整理名單... 🏸</p>';
+
+      try {
+        const response = await fetch(`${GAS_URL}?action=delete&timestamp=${encodeURIComponent(timestamp)}&id=${idValue}`);
+        const res = await response.json();
+
+        if (res.success) {
+          alert("刪除成功！");
+          searchData(); // 重新整理列表
+        } else {
+          alert("刪除失敗：" + res.message);
+          searchData();
+        }
+      } catch (error) {
+        alert("系統發生錯誤，請稍後再試。");
+        searchData();
+      }
+    }
+  </script>
+</body>
+</html>
